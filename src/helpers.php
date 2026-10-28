@@ -16,6 +16,12 @@ function money(int $cents): string
     return ($cents < 0 ? '-' : '') . '$' . number_format(abs($cents) / 100, 2);
 }
 
+/** Currency code for display, e.g. "NZD" (from CURRENCY in .env) */
+function cur(): string
+{
+    return strtoupper(App\Env::get('CURRENCY', 'nzd'));
+}
+
 function dmy(?int $ts): string
 {
     return $ts ? date('d/m/Y', $ts) : '—';

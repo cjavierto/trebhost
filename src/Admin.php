@@ -325,7 +325,7 @@ final class Admin
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $name . '"');
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Date', 'Client', 'Service', 'Amount (NZD)', 'Status', 'Card', 'Note', 'Receipt']);
+        fputcsv($out, ['Date', 'Client', 'Service', 'Amount (' . cur() . ')', 'Status', 'Card', 'Note', 'Receipt']);
         foreach ($data['rows'] as $r) {
             // Guard against spreadsheet formula injection from client-supplied text.
             $safe = fn(string $v) => preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v;

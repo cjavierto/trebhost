@@ -123,7 +123,7 @@ $linkAt = (int)($client['metadata']['link_at'] ?? $client['created'] ?? 0);
         <input id="svc-desc" name="description" type="text" placeholder="e.g. Business plan · example.co.nz" maxlength="140">
       </div>
       <div class="field">
-        <label for="svc-price">Price (NZD, incl. GST)</label>
+        <label for="svc-price">Price (<?= e(cur()) ?>, incl. GST)</label>
         <div class="input-money"><span aria-hidden="true">$</span><input id="svc-price" name="price" type="text" inputmode="decimal" placeholder="0.00" required></div>
       </div>
       <fieldset class="field" style="margin:0;padding:0;border:0">

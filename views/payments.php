@@ -105,6 +105,6 @@ $collectedTitle = $range['month'] ? 'Collected in ' . $range['month'] : 'Collect
   <?php endif; ?>
   <div class="table-foot">
     <span>Showing <?= count($rows) ?> payment<?= count($rows) === 1 ? '' : 's' ?> · <?= e($range['label']) ?></span>
-    <span>Amounts in NZD, incl. GST</span>
+    <span>Amounts in <?= e(cur()) ?>, incl. GST</span>
   </div>
 </section>

@@ -31,7 +31,7 @@ $hookUrl = base_url() . '/webhook/stripe';
       <div class="field"><label for="b-gst">GST number <span class="opt">(optional)</span></label>
         <input id="b-gst" name="gst_number" type="text" value="<?= e($s['gst_number']) ?>" placeholder="[YOUR GST NUMBER]" maxlength="30"></div>
       <div class="field"><label for="b-currency">Currency</label>
-        <select id="b-currency" disabled><option>NZD — New Zealand dollar</option></select></div>
+        <select id="b-currency" disabled><option><?= e(cur()) ?></option></select></div>
     </div>
     <div class="field">
       <label for="b-footer">Payment page message</label>

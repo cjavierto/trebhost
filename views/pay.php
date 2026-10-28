@@ -27,7 +27,7 @@ $pay = '/c/' . $token;
     <div class="svc-top">
       <div>
         <h2 id="svc-h">Your services</h2>
-        <p><?= $n ?> service<?= $n === 1 ? '' : 's' ?> · prices in NZD, incl. GST</p>
+        <p><?= $n ?> service<?= $n === 1 ? '' : 's' ?> · prices in <?= e(cur()) ?>, incl. GST</p>
       </div>
       <?php if ($n > 0 && $due > 0): ?>
         <div class="due"><span>Amount due</span><span><?= e(money($due)) ?></span></div>

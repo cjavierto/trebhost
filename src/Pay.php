@@ -55,7 +55,7 @@ final class Pay
                         $amount = (int)($session['amount_total'] ?? 0);
                         $to = !empty($client['email']) ? ' A receipt is on its way to ' . $client['email'] . '.' : '';
                         $banner['text'] = $amount > 0
-                            ? 'We\'ve received ' . money($amount) . ' NZD.' . $to
+                            ? 'We\'ve received ' . money($amount) . ' ' . cur() . '.' . $to
                             : 'Your card is saved and your service is set up. You\'ll be charged on the date shown below.';
                     }
                 } catch (StripeException) {
