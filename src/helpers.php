@@ -22,6 +22,18 @@ function cur(): string
     return strtoupper(App\Env::get('CURRENCY', 'nzd'));
 }
 
+/** "GST" in NZ, a neutral "Tax" elsewhere */
+function tax_label(): string
+{
+    return cur() === 'NZD' ? 'GST' : 'Tax';
+}
+
+/** ", incl. GST" only when billing in NZD */
+function gst_note(): string
+{
+    return cur() === 'NZD' ? ', incl. GST' : '';
+}
+
 function dmy(?int $ts): string
 {
     return $ts ? date('d/m/Y', $ts) : '—';

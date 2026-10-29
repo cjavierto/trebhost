@@ -38,7 +38,7 @@ Requires PHP 8.1+ with the `curl` and `mbstring` extensions (both are on by defa
 ## 4. Webhook (emails for failed payments)
 
 1. Stripe → Developers → Webhooks → **Add endpoint**: `https://pay.trebhost.co.nz/webhook/stripe`
-2. Events: `invoice.payment_failed` and `invoice.paid`.
+2. Events: `invoice.payment_failed`, `invoice.paid` and `checkout.session.completed`.
 3. Copy the **Signing secret** (`whsec_...`) into `STRIPE_WEBHOOK_SECRET` in `config/.env`.
 4. Admin → Settings should now show **Receiving events** after Stripe sends one (use "Send test webhook" in Stripe).
 
@@ -65,7 +65,8 @@ cPanel → **Cron Jobs** → add once a day:
 
 | Thing | What happens |
 | --- | --- |
-| Pay now | Opens Stripe Checkout. After paying, the client lands back on their page with a success message. Stripe then charges them automatically every month or year. |
+| Set up payment | When a client has 2+ unpaid services, one button opens a single Stripe card-setup page. After they save their card, every service is subscribed on it (services without a first-charge date are charged straight away, the rest on their dates). With only one unpaid service it's a normal Stripe Checkout. The webhook finishes the setup even if the client closes the tab. |
+| Pay now (single) | Opens Stripe Checkout. After paying, the client lands back on their page with a success message. Stripe then charges them automatically every month or year. |
 | First charge date | Optional per service. The client's card is saved when they check out and the first charge happens on that date. Stripe allows up to one billing period ahead (1 month for monthly, 1 year for yearly). |
 | Failed payment | Shown as "Payment failed". The client's Pay now button opens the Stripe invoice. Stripe retries automatically; you and the client get an email (if enabled). |
 | Remove service | If it's already being billed, future charges stop at the end of the current period. |
@@ -76,6 +77,6 @@ cPanel → **Cron Jobs** → add once a day:
 
 - **Back up `storage/`**: it holds your Settings, the changed admin password and webhook state. Everything else lives in Stripe.
 - **Emails** are sent with PHP `mail()` from your billing email. For best delivery, make sure that mailbox exists on your domain and SPF/DKIM are on in cPanel (Email Deliverability).
-- **Prices** are NZD and entered GST-inclusive. This app doesn't calculate GST for you.
+- **Currency** is set by `CURRENCY` in `config/.env` (e.g. `usd`). Set it before you add services: a Stripe price keeps the currency it was created with, and a Stripe customer can't mix currencies on subscriptions. Labels follow the setting. This app doesn't calculate tax for you.
 - **Stripe API version** is pinned in the code (`2024-06-20`), so Stripe account upgrades can't change behaviour.
 - Errors are logged to `storage/error.log`. Set `APP_DEBUG=1` in `.env` temporarily if you need to see them on screen (turn off again after).

@@ -278,3 +278,7 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 12px; }
   .search input { width: 100%; }
   .search { flex: 1 1 200px; }
 }
+
+.svc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg, #F6F8FB); }
+.svc-foot p { flex: 1 1 280px; font-size: 14px; line-height: 1.5; color: var(--text-2); margin: 0; }
+@media (max-width: 640px) { .svc-foot .btn { width: 100%; } }

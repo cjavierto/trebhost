@@ -32,6 +32,8 @@ try {
         Pay::page($m[1]);
     } elseif (preg_match('#^/c/([A-Za-z0-9_.\-]+)/checkout$#', $path, $m) && $isPost) {
         Pay::checkout($m[1]);
+    } elseif (preg_match('#^/c/([A-Za-z0-9_.\-]+)/complete$#', $path, $m) && $isGet) {
+        Pay::complete($m[1]);
     } elseif (preg_match('#^/c/([A-Za-z0-9_.\-]+)/portal$#', $path, $m) && $isPost) {
         Pay::portal($m[1]);
     } elseif ($path === '/admin/login') {
@@ -71,7 +73,7 @@ try {
     }
 } catch (StripeException $e) {
     error_log('Stripe error on ' . $path . ': ' . $e->getMessage());
-    http_response_code(502);
+    http_response_code(500);
     $admin = str_starts_with($path, '/admin');
     render('error', [
         'message' => $admin ? 'Stripe said: ' . $e->getMessage() : 'We could not reach our payment provider just now. Please try again in a minute.',

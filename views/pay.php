@@ -4,6 +4,9 @@
 /** @var array $rows */
 /** @var int $due */
 /** @var bool $hasPortal */
+/** @var int $dueCount */
+/** @var int $dueToday */
+/** @var ?array $error */
 /** @var ?array $banner */
 $s = settings();
 $n = count($rows);
@@ -23,11 +26,15 @@ $pay = '/c/' . $token;
     </div>
   <?php endif; ?>
 
+  <?php if (!empty($error)): ?>
+    <div class="banner <?= $error[0] === 'error' ? 'error' : 'success' ?>" role="alert"><div><?= e($error[1]) ?></div></div>
+  <?php endif; ?>
+
   <section class="card svc-card" aria-labelledby="svc-h">
     <div class="svc-top">
       <div>
         <h2 id="svc-h">Your services</h2>
-        <p><?= $n ?> service<?= $n === 1 ? '' : 's' ?> · prices in <?= e(cur()) ?>, incl. GST</p>
+        <p><?= $n ?> service<?= $n === 1 ? '' : 's' ?> · prices in <?= e(cur()) ?><?= e(gst_note()) ?></p>
       </div>
       <?php if ($n > 0 && $due > 0): ?>
         <div class="due"><span>Amount due</span><span><?= e(money($due)) ?></span></div>
@@ -61,6 +68,8 @@ $pay = '/c/' . $token;
               <?php if ($sub && $sub['period_end']): ?>
                 <span class="when"><?= $sub['cancel_at_period_end'] ? 'Ends ' : 'Next charge ' ?><?= e(dmy($sub['period_end'])) ?></span>
               <?php endif; ?>
+            <?php elseif ($state === 'due' && $dueCount >= 2): ?>
+              <?php if ($svc['anchor']): ?><span class="when">First charge <?= e(dmy($svc['anchor'])) ?></span><?php endif; ?>
             <?php else: ?>
               <form method="post" action="<?= e($pay) ?>/checkout" style="width:100%">
                 <input type="hidden" name="price_id" value="<?= e($svc['id']) ?>">
@@ -76,6 +85,13 @@ $pay = '/c/' . $token;
         </li>
       <?php endforeach; ?>
     </ul>
+    <?php if ($dueCount >= 2): ?>
+      <form method="post" action="<?= e($pay) ?>/checkout" class="svc-foot">
+        <input type="hidden" name="price_id" value="all">
+        <p>Enter your card once and we'll set up all <?= (int)$dueCount ?> services. <?= $dueToday > 0 ? 'Services without a first-charge date are charged today (' . e(money($dueToday)) . '); the others are charged on their dates.' : 'Nothing is charged today; each service is charged on its first-charge date.' ?></p>
+        <button type="submit" class="btn">Set up payment for all services</button>
+      </form>
+    <?php endif; ?>
     <?php endif; ?>
     <?php if ($s['footer_message'] !== ''): ?>
       <div class="note-card" style="border-top:1px solid var(--border)"><?= nl2br(e($s['footer_message'])) ?></div>

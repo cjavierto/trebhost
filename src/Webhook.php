@@ -5,7 +5,7 @@ namespace App;
 
 /**
  * Stripe webhook receiver (POST /webhook/stripe).
- * Stripe events to enable: invoice.payment_failed, invoice.paid
+ * Stripe events to enable: invoice.payment_failed, invoice.paid, checkout.session.completed
  */
 final class Webhook
 {
@@ -41,12 +41,27 @@ final class Webhook
             match ($event['type']) {
                 'invoice.payment_failed' => self::paymentFailed($event['data']['object']),
                 'invoice.paid' => self::paymentSucceeded($event['data']['object']),
+                'checkout.session.completed' => self::setupCompleted($event['data']['object']),
                 default => null,
             };
         } catch (\Throwable $e) {
             error_log('Webhook handler error: ' . $e->getMessage());
         }
         echo 'ok';
+    }
+
+    /** Card setup finished but the client never came back to the page: finish it here. */
+    private static function setupCompleted(array $session): void
+    {
+        if (($session['mode'] ?? '') !== 'setup' || ($session['metadata']['kind'] ?? '') !== 'setup_all') {
+            return;
+        }
+        $client = self::clientFor($session);
+        if (!$client) {
+            return;
+        }
+        $full = StripeApi::request('GET', 'checkout/sessions/' . $session['id'], ['expand' => ['setup_intent']]);
+        Pay::activate($client, $full);
     }
 
     private static function clientFor(array $invoice): ?array

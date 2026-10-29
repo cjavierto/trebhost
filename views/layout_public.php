@@ -26,7 +26,7 @@ $s = settings();
     <div class="in">
       <span class="secure"><?= icon('lock', 16) ?>Secured by Stripe</span>
       <p>Payments are processed securely by Stripe. We never see or store your card details.</p>
-      <p class="fine">© <?= date('Y') ?> <?= e($s['business_name']) ?><?= $s['gst_number'] !== '' ? ' · GST no. ' . e($s['gst_number']) : '' ?></p>
+      <p class="fine">© <?= date('Y') ?> <?= e($s['business_name']) ?><?= $s['gst_number'] !== '' ? ' · ' . tax_label() . ' no. ' . e($s['gst_number']) : '' ?></p>
     </div>
   </footer>
 </div>

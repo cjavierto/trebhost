@@ -28,8 +28,8 @@ $hookUrl = base_url() . '/webhook/stripe';
         <input id="b-name" name="business_name" type="text" value="<?= e($s['business_name']) ?>" required maxlength="80"></div>
       <div class="field"><label for="b-email">Billing email</label>
         <input id="b-email" name="billing_email" type="email" value="<?= e($s['billing_email']) ?>" required></div>
-      <div class="field"><label for="b-gst">GST number <span class="opt">(optional)</span></label>
-        <input id="b-gst" name="gst_number" type="text" value="<?= e($s['gst_number']) ?>" placeholder="[YOUR GST NUMBER]" maxlength="30"></div>
+      <div class="field"><label for="b-gst"><?= e(tax_label()) ?> number <span class="opt">(optional)</span></label>
+        <input id="b-gst" name="gst_number" type="text" value="<?= e($s['gst_number']) ?>" placeholder="[YOUR <?= e(strtoupper(tax_label())) ?> NUMBER]" maxlength="30"></div>
       <div class="field"><label for="b-currency">Currency</label>
         <select id="b-currency" disabled><option><?= e(cur()) ?></option></select></div>
     </div>

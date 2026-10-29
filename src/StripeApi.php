@@ -60,7 +60,7 @@ final class StripeApi
         $out[] = rawurlencode($prefix) . '=' . rawurlencode((string)$value);
     }
 
-    private static function handle(\CurlHandle $ch, string $method, string $path, array $params): void
+    private static function handle(\CurlHandle $ch, string $method, string $path, array $params, ?string $idempotencyKey = null): void
     {
         $url = self::base() . '/v1/' . ltrim($path, '/');
         $body = self::encode($params);
@@ -82,7 +82,7 @@ final class StripeApi
                 'Stripe-Version: ' . self::VERSION,
                 'Content-Type: application/x-www-form-urlencoded',
                 'User-Agent: TrebHostPortal/1.0',
-            ],
+            ] + ($idempotencyKey !== null ? [4 => 'Idempotency-Key: ' . $idempotencyKey] : []),
         ]);
     }
 
@@ -103,10 +103,10 @@ final class StripeApi
         return $data;
     }
 
-    public static function request(string $method, string $path, array $params = []): array
+    public static function request(string $method, string $path, array $params = [], ?string $idempotencyKey = null): array
     {
         $ch = curl_init();
-        self::handle($ch, strtoupper($method), $path, $params);
+        self::handle($ch, strtoupper($method), $path, $params, $idempotencyKey);
         $resp = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         return self::decode($resp, $status, curl_error($ch));
