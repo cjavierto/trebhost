@@ -104,7 +104,15 @@ final class Pay
             if (count($due) === 1) {
                 $priceId = $due[0]['id'];
             } else {
+                $lines = [];
+                foreach ($due as $d) {
+                    $lines[] = $d['name'] . ' ' . money($d['amount']) . ' ' . cur() . ' per ' . $d['interval']
+                        . ($d['anchor'] && $d['anchor'] > time() + 3600 ? ' (first charge ' . dmy($d['anchor']) . ')' : ' (charged today)');
+                }
+                $summary = 'By saving your card you authorise ' . settings()['business_name'] . ' to charge it for: '
+                    . implode('; ', $lines) . '. Renewals are then charged automatically each period.';
                 $session = StripeApi::request('POST', 'checkout/sessions', [
+                    'custom_text' => ['submit' => ['message' => mb_substr($summary, 0, 1190)]],
                     'mode' => 'setup',
                     'customer' => $client['id'],
                     'payment_method_types' => ['card'],
