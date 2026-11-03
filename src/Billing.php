@@ -6,8 +6,9 @@ namespace App;
 /**
  * Data layer. Stripe is the database:
  *   client  = Stripe Customer   (metadata.app = "renewals", metadata.svc = comma list of price ids)
- *   service = Stripe Product + recurring Price
- *   payment = Stripe Subscription (created when the client completes Checkout)
+ *   service = Stripe Product + Price (recurring, or one-time for a one-off payment)
+ *   payment = Stripe Subscription (created when the client completes Checkout);
+ *             a one-off service is paid by a one-time Checkout and marked with price metadata paid_at
  */
 final class Billing
 {
@@ -77,7 +78,8 @@ final class Billing
             'name' => (string)($prod['name'] ?? 'Service'),
             'description' => (string)($prod['description'] ?? ''),
             'amount' => (int)($price['unit_amount'] ?? 0),
-            'interval' => (($price['recurring']['interval'] ?? 'month') === 'year') ? 'year' : 'month',
+            'interval' => empty($price['recurring']) ? 'once' : (($price['recurring']['interval'] ?? 'month') === 'year' ? 'year' : 'month'),
+            'paid_at' => isset($price['metadata']['paid_at']) && $price['metadata']['paid_at'] !== '' ? (int)$price['metadata']['paid_at'] : null,
             'anchor' => isset($price['metadata']['anchor']) ? (int)$price['metadata']['anchor'] : null,
             'active' => (bool)($price['active'] ?? false),
             'product' => is_array($price['product'] ?? null) ? ($price['product']['id'] ?? null) : ($price['product'] ?? null),
@@ -93,7 +95,7 @@ final class Billing
         }
         $out = [];
         foreach (StripeApi::getMany($reqs) as $price) {
-            if ($price && !empty($price['active']) && !empty($price['recurring'])) {
+            if ($price && !empty($price['active'])) {
                 $out[] = self::serviceFromPrice($price);
             }
         }
@@ -130,9 +132,12 @@ final class Billing
         return array_map([self::class, 'subFromStripe'], $raw);
     }
 
-    /** @return array{state:string,sub:?array} state = active | due | failed */
+    /** @return array{state:string,sub:?array} state = active | due | failed | paid (one-off only) */
     public static function state(array $service, array $subs): array
     {
+        if ($service['interval'] === 'once') {
+            return ['state' => $service['paid_at'] ? 'paid' : 'due', 'sub' => null];
+        }
         foreach ($subs as $s) {
             if ($s['price'] === $service['id'] && in_array($s['status'], self::LIVE, true)) {
                 $failed = in_array($s['status'], ['past_due', 'unpaid'], true);
@@ -142,9 +147,16 @@ final class Billing
         return ['state' => 'due', 'sub' => null];
     }
 
+    /** Mark a one-off service as paid (idempotent). */
+    public static function markPaid(string $priceId): void
+    {
+        StripeApi::request('POST', 'prices/' . $priceId, ['metadata' => ['paid_at' => (string)time()]]);
+    }
+
     /** Most urgent state across a client's services. */
     public static function rollup(array $states): string
     {
+        $states = array_map(fn($s) => $s === 'paid' ? 'active' : $s, $states);
         foreach (['failed', 'due', 'active'] as $want) {
             foreach ($states as $s) {
                 if ($s === $want) {

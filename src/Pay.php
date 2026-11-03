@@ -39,10 +39,10 @@ final class Pay
         $dueToday = 0;
         foreach ($services as $svc) {
             $st = Billing::state($svc, $subs);
-            if ($st['state'] !== 'active') {
+            if (!in_array($st['state'], ['active', 'paid'], true)) {
                 $due += $svc['amount'];
             }
-            if ($st['state'] === 'due') {
+            if ($st['state'] === 'due' && $svc['interval'] !== 'once') {
                 $dueCount++;
                 if (!($svc['anchor'] && $svc['anchor'] > time() + 3600)) {
                     $dueToday += $svc['amount'];
@@ -97,7 +97,7 @@ final class Pay
 
         if ($priceId === 'all') {
             // One card setup for every service that still needs payment.
-            $due = array_values(array_filter($all, fn($s) => Billing::state($s, $subs)['state'] === 'due'));
+            $due = array_values(array_filter($all, fn($s) => $s['interval'] !== 'once' && Billing::state($s, $subs)['state'] === 'due'));
             if (!$due) {
                 redirect($back);
             }
@@ -134,8 +134,21 @@ final class Pay
         $service = $services[0];
         $st = Billing::state($service, $subs);
 
-        if ($st['state'] === 'active') {
+        if (in_array($st['state'], ['active', 'paid'], true)) {
             redirect($back);
+        }
+        if ($service['interval'] === 'once') {
+            // One-off: a single payment, with a Stripe invoice/receipt.
+            $session = StripeApi::request('POST', 'checkout/sessions', [
+                'mode' => 'payment',
+                'customer' => $client['id'],
+                'line_items' => [['price' => $priceId, 'quantity' => 1]],
+                'invoice_creation' => ['enabled' => true],
+                'metadata' => ['app' => Billing::TAG, 'kind' => 'one_off', 'price_id' => $priceId],
+                'success_url' => base_url() . $back . '/complete?sid={CHECKOUT_SESSION_ID}',
+                'cancel_url' => base_url() . $back,
+            ]);
+            redirect($session['url']);
         }
         if ($st['state'] === 'failed') {
             // Pay the open invoice, or fall back to the card portal.
@@ -177,6 +190,10 @@ final class Pay
             if ($sessionCustomer !== $client['id'] || ($session['status'] ?? '') !== 'complete') {
                 redirect($back);
             }
+            if (($session['mode'] ?? '') === 'payment') {
+                self::settleOneOff($client, $session);
+                redirect($back . '?paid=1&sid=' . $sid);
+            }
             $failed = self::activate($client, $session);
         } catch (StripeException $e) {
             error_log('Setup completion error: ' . $e->getMessage());
@@ -187,6 +204,16 @@ final class Pay
             flash('error', 'Your card was saved, but we couldn\'t set up: ' . implode(', ', $failed) . '. Please use the Pay now button on that service, or contact us.');
         }
         redirect($back . '?paid=1&sid=' . $sid);
+    }
+
+    /** A one-off Checkout finished: mark that service paid (only for this client's own services). */
+    public static function settleOneOff(array $client, array $session): void
+    {
+        $priceId = (string)($session['metadata']['price_id'] ?? '');
+        if (($session['payment_status'] ?? '') !== 'paid' || !in_array($priceId, Billing::serviceIds($client), true)) {
+            return;
+        }
+        Billing::markPaid($priceId);
     }
 
     /**
@@ -209,7 +236,7 @@ final class Pay
         $subs = Billing::subsFor($client['id']);
         $failed = [];
         foreach (Billing::services($client) as $svc) {
-            if (Billing::state($svc, $subs)['state'] !== 'due') {
+            if ($svc['interval'] === 'once' || Billing::state($svc, $subs)['state'] !== 'due') {
                 continue;
             }
             $params = [

@@ -66,6 +66,7 @@ cPanel → **Cron Jobs** → add once a day:
 | Thing | What happens |
 | --- | --- |
 | Set up payment | When a client has 2+ unpaid services, one button opens a single Stripe card-setup page. After they save their card, every service is subscribed on it (services without a first-charge date are charged straight away, the rest on their dates). With only one unpaid service it's a normal Stripe Checkout. The webhook finishes the setup even if the client closes the tab. |
+| One-off service | Choose **One-off** when adding a service for a single payment (setup fee, logo, etc.). The client pays once through Stripe Checkout and gets an invoice/receipt. The service then shows **Paid** with the date and no longer counts as due. It is never part of the one-card setup. |
 | Pay now (single) | Opens Stripe Checkout. After paying, the client lands back on their page with a success message. Stripe then charges them automatically every month or year. |
 | First charge date | Optional per service. The client's card is saved when they check out and the first charge happens on that date. Stripe allows up to one billing period ahead (1 month for monthly, 1 year for yearly). |
 | Failed payment | Shown as "Payment failed". The client's Pay now button opens the Stripe invoice. Stripe retries automatically; you and the client get an email (if enabled). |

@@ -53,11 +53,16 @@ final class Webhook
     /** Card setup finished but the client never came back to the page: finish it here. */
     private static function setupCompleted(array $session): void
     {
-        if (($session['mode'] ?? '') !== 'setup' || ($session['metadata']['kind'] ?? '') !== 'setup_all') {
-            return;
-        }
+        $kind = $session['metadata']['kind'] ?? '';
         $client = self::clientFor($session);
         if (!$client) {
+            return;
+        }
+        if (($session['mode'] ?? '') === 'payment' && $kind === 'one_off') {
+            Pay::settleOneOff($client, $session);
+            return;
+        }
+        if (($session['mode'] ?? '') !== 'setup' || $kind !== 'setup_all') {
             return;
         }
         $full = StripeApi::request('GET', 'checkout/sessions/' . $session['id'], ['expand' => ['setup_intent']]);

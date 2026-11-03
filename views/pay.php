@@ -60,15 +60,17 @@ $pay = '/c/' . $token;
           </div>
           <div class="price">
             <b><?= e(money($svc['amount'])) ?></b>
-            <span>per <?= $svc['interval'] ?></span>
+            <span><?= $svc['interval'] === 'once' ? 'one-off' : 'per ' . $svc['interval'] ?></span>
           </div>
           <div class="act">
             <?= badge($state) ?>
-            <?php if ($state === 'active'): ?>
+            <?php if ($state === 'paid'): ?>
+              <?php if ($svc['paid_at']): ?><span class="when">Paid <?= e(dmy($svc['paid_at'])) ?></span><?php endif; ?>
+            <?php elseif ($state === 'active'): ?>
               <?php if ($sub && $sub['period_end']): ?>
                 <span class="when"><?= $sub['cancel_at_period_end'] ? 'Ends ' : 'Next charge ' ?><?= e(dmy($sub['period_end'])) ?></span>
               <?php endif; ?>
-            <?php elseif ($state === 'due' && $dueCount >= 2): ?>
+            <?php elseif ($state === 'due' && $dueCount >= 2 && $svc['interval'] !== 'once'): ?>
               <?php if ($svc['anchor']): ?><span class="when">First charge <?= e(dmy($svc['anchor'])) ?></span><?php endif; ?>
             <?php else: ?>
               <form method="post" action="<?= e($pay) ?>/checkout" style="width:100%">

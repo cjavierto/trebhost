@@ -67,14 +67,16 @@ $linkAt = (int)($client['metadata']['link_at'] ?? $client['created'] ?? 0);
             <th scope="col">Service</th>
             <th scope="col" style="text-align:right">Price</th>
             <th scope="col">Status</th>
-            <th scope="col">Next charge</th>
+            <th scope="col">Next charge / paid</th>
             <th scope="col"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
         <?php foreach ($rows as $r):
             $svc = $r['svc']; $sub = $r['sub'];
-            if ($r['state'] === 'active') {
+            if ($r['state'] === 'paid') {
+                $next = $svc['paid_at'] ? 'Paid ' . dmy($svc['paid_at']) : '—';
+            } elseif ($r['state'] === 'active') {
                 $next = $sub && $sub['period_end'] ? ($sub['cancel_at_period_end'] ? 'Ends ' : '') . dmy($sub['period_end']) : '—';
             } elseif ($r['state'] === 'failed') {
                 $next = !empty($sub['retry_at']) ? 'Retry ' . dmy($sub['retry_at']) : '—';
@@ -87,12 +89,12 @@ $linkAt = (int)($client['metadata']['link_at'] ?? $client['created'] ?? 0);
               <span class="strong" style="display:block"><?= e($svc['name']) ?></span>
               <?php if ($svc['description'] !== ''): ?><span class="sub"><?= e($svc['description']) ?></span><?php endif; ?>
             </td>
-            <td class="num"><span class="strong"><?= e(money($svc['amount'])) ?></span><span style="color:var(--muted)"> / <?= $svc['interval'] ?></span></td>
+            <td class="num"><span class="strong"><?= e(money($svc['amount'])) ?></span><span style="color:var(--muted)"><?= $svc['interval'] === 'once' ? ' one-off' : ' / ' . $svc['interval'] ?></span></td>
             <td><?= badge($r['state']) ?></td>
             <td style="font-variant-numeric:tabular-nums"><?= e($next) ?></td>
             <td class="num">
               <form method="post" action="<?= e($base) ?>/services/remove"
-                    data-confirm="<?= e($r['state'] === 'due' ? 'Remove ' . $svc['name'] . '?' : 'Remove ' . $svc['name'] . '? It is already being billed. Future charges stop at the end of the current period.') ?>">
+                    data-confirm="<?= e(in_array($r['state'], ['due', 'paid'], true) ? 'Remove ' . $svc['name'] . '?' : 'Remove ' . $svc['name'] . '? It is already being billed. Future charges stop at the end of the current period.') ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" name="price_id" value="<?= e($svc['id']) ?>">
                 <button type="submit" class="link-btn danger" aria-label="Remove <?= e($svc['name']) ?>">Remove</button>
@@ -131,6 +133,7 @@ $linkAt = (int)($client['metadata']['link_at'] ?? $client['created'] ?? 0);
         <div class="seg">
           <label><input type="radio" name="cycle" value="monthly" checked>Monthly</label>
           <label><input type="radio" name="cycle" value="yearly">Yearly</label>
+          <label><input type="radio" name="cycle" value="once">One-off</label>
         </div>
       </fieldset>
       <div class="field">
@@ -139,7 +142,7 @@ $linkAt = (int)($client['metadata']['link_at'] ?? $client['created'] ?? 0);
       </div>
     </div>
     <div class="form-actions">
-      <span class="note">Leave the date blank to charge when the client first pays.</span>
+      <span class="note" id="svc-note">Leave the date blank to charge when the client first pays. One-off services are paid once and don't use a date.</span>
       <button type="submit" class="btn"><?= icon('plus') ?>Add service</button>
     </div>
   </form>

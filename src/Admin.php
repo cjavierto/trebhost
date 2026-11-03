@@ -117,7 +117,7 @@ final class Admin
         $due = 0;
         foreach ($services as $svc) {
             $st = Billing::state($svc, $subs);
-            if ($st['state'] !== 'active') {
+            if (!in_array($st['state'], ['active', 'paid'], true)) {
                 $due += $svc['amount'];
             }
             $rows[] = ['svc' => $svc] + $st;
@@ -189,8 +189,9 @@ final class Admin
         $name = trim((string)($_POST['name'] ?? ''));
         $desc = trim((string)($_POST['description'] ?? ''));
         $priceIn = str_replace([',', '$', ' '], '', (string)($_POST['price'] ?? ''));
-        $interval = (($_POST['cycle'] ?? 'monthly') === 'yearly') ? 'year' : 'month';
-        $dateIn = trim((string)($_POST['first_charge'] ?? ''));
+        $cycle = (string)($_POST['cycle'] ?? 'monthly');
+        $interval = $cycle === 'once' ? 'once' : ($cycle === 'yearly' ? 'year' : 'month');
+        $dateIn = $interval === 'once' ? '' : trim((string)($_POST['first_charge'] ?? ''));
 
         if ($name === '') {
             flash('error', 'Enter a service name.');
@@ -224,7 +225,7 @@ final class Admin
             'product' => $product['id'],
             'currency' => Billing::currency(),
             'unit_amount' => (int)round(((float)$priceIn) * 100),
-            'recurring' => ['interval' => $interval],
+            'recurring' => $interval === 'once' ? null : ['interval' => $interval],
             'metadata' => ['app' => Billing::TAG, 'customer' => $client['id'], 'anchor' => $anchor],
         ]);
         $ids[] = $price['id'];
@@ -295,7 +296,7 @@ final class Admin
             $owes = false;
             foreach ($row['services'] as $svc) {
                 $st = Billing::state($svc, $row['subs']);
-                if ($st['state'] !== 'active') {
+                if (!in_array($st['state'], ['active', 'paid'], true)) {
                     $outstanding += $svc['amount'];
                     $owes = true;
                 }

@@ -69,6 +69,19 @@
     });
   });
 
+  // One-off services don't use a first-charge date
+  var cycles = document.querySelectorAll('input[name="cycle"]');
+  var dateBox = document.getElementById('svc-date');
+  if (cycles.length && dateBox) {
+    var syncCycle = function () {
+      var once = document.querySelector('input[name="cycle"]:checked').value === 'once';
+      dateBox.disabled = once;
+      if (once) { dateBox.value = ''; }
+    };
+    cycles.forEach(function (c) { c.addEventListener('change', syncCycle); });
+    syncCycle();
+  }
+
   // Changing the date range reloads with ?range=
   var range = document.getElementById('range');
   if (range) {

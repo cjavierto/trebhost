@@ -89,8 +89,8 @@ select:disabled { background: #F8FAFC; color: var(--muted); }
 .search { position: relative; display: flex; align-items: center; }
 .search svg { position: absolute; left: 12px; color: var(--muted-2); pointer-events: none; }
 .search input { padding-left: 36px; width: 280px; max-width: 100%; }
-.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; gap: 3px; height: 44px; background: var(--pill); border: 1px solid var(--border); border-radius: 8px; }
-.seg label { display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; border: 1px solid transparent; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; gap: 3px; height: 44px; background: var(--pill); border: 1px solid var(--border); border-radius: 8px; }
+.seg label { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 0 6px; border-radius: 6px; border: 1px solid transparent; font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; }
 .seg label:has(input:checked) { background: #fff; border-color: var(--pill-border); font-weight: 600; color: var(--text); }
 .seg input { margin: 0; accent-color: var(--accent); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
